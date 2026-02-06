@@ -7,8 +7,8 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 export const generateMission = async (character: string, playerName: string, missionCount: number): Promise<Mission> => {
   const isClimax = missionCount >= 5;
   const prompt = isClimax 
-    ? `Buat misi FINAL untuk ${character} (${playerName}) yang ingin melakukan kekacauan terbesar di sekolah. Target utamanya adalah menjebak Pak Yono, guru terkiller. Judul harus dramatis.`
-    : `Buat sebuah misi jahil sekolah untuk ${character} (${playerName}). Ini misi ke-${missionCount + 1}. Misi harus seru dan melibatkan guru lain sebelum menghadapi Pak Yono nantinya.`;
+    ? `Buat misi FINAL yang sangat dramatis untuk ${character} (nama pemain: ${playerName}). Misi ini adalah puncak kekacauan di sekolah untuk memancing kemarahan besar Pak Yono. Judul misi harus provokatif dan berisiko tinggi.`
+    : `Buat sebuah misi jahil sekolah level ${missionCount + 1} untuk karakter ${character} (nama: ${playerName}). Misi harus kreatif, menggunakan bahasa Indonesia gaul, dan perlahan-lahan meningkatkan tensi dengan Pak Yono.`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -34,14 +34,17 @@ export const generateMission = async (character: string, playerName: string, mis
   return JSON.parse(response.text.trim()) as Mission;
 };
 
-export const generateScenario = async (character: string, playerName: string, mission: Mission, suspicion: number): Promise<AIResponse> => {
-  const isHighSuspicion = suspicion > 70;
+export const generateScenario = async (character: string, playerName: string, mission: Mission, missionCount: number): Promise<AIResponse> => {
+  const isClimax = missionCount >= 5;
+  const prompt = `Karakter ${character} (Pemain: ${playerName}) sedang menjalankan misi: "${mission.title}". 
+    Tiba-tiba Pak Yono, guru paling galak, muncul dengan penggaris kayunya!
+    Buat skenario dialog dalam bahasa Indonesia di mana Pak Yono menginterogasi pemain.
+    ${isClimax ? "Ini adalah puncak cerita! Pak Yono sangat marah. Berikan pilihan yang bisa memicu perkelahian atau adu mulut hebat." : "Pak Yono curiga tapi belum meledak."}
+    Berikan 3 pilihan tindakan. Setiap pilihan butuh nilai risiko (0-100), peluang berhasil (0-100), dan deskripsi hasil akhir yang dramatis.`;
+
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `Karakter ${character} (nama asli: ${playerName}) sedang menjalankan misi: "${mission.title}". 
-    ${isHighSuspicion ? "Tiba-tiba Pak Yono memergokinya dengan muka merah padam dan berteriak!" : "Pak Yono sedang berpatroli dengan penggaris kayunya."}
-    Buat skenario di mana Pak Yono bertanya atau menuduh sesuatu dalam bahasa Indonesia yang galak. 
-    Berikan 3 pilihan jawaban. Jika ini misi final, salah satu pilihan harus memicu konfrontasi/berantem yang berisiko dikeluarkan dari sekolah.`,
+    contents: prompt,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
